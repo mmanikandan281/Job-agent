@@ -1,4 +1,6 @@
 import os
+import json
+import re
 from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
 import faiss
@@ -8,38 +10,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Free embedding model - downloads once, runs locally
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 RESUME_FOLDER = "resumes"
 VECTOR_STORE_PATH = "vector_store"
 
 
-# ─────────────────────────────────────────
-# Auto scan resumes folder
-# No hardcoding - just drop PDFs in folder
-# ─────────────────────────────────────────
 def get_all_resumes() -> dict:
     resumes = {}
-
     if not os.path.exists(RESUME_FOLDER):
         print("⚠️ resumes/ folder not found")
         return resumes
-
     for file in os.listdir(RESUME_FOLDER):
         if file.endswith(".pdf"):
             name = file.replace(".pdf", "")
             resumes[name] = os.path.join(RESUME_FOLDER, file)
-
     if not resumes:
         print("⚠️ No PDF files found in resumes/ folder")
-
     return resumes
 
 
-# ─────────────────────────────────────────
-# Read PDF and extract text
-# ─────────────────────────────────────────
 def extract_text_from_pdf(pdf_path: str) -> str:
     reader = PdfReader(pdf_path)
     text = ""
@@ -48,9 +38,6 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 
-# ─────────────────────────────────────────
-# Split text into chunks
-# ─────────────────────────────────────────
 def split_into_chunks(text: str, chunk_size: int = 100) -> list:
     words = text.split()
     chunks = []
@@ -60,10 +47,6 @@ def split_into_chunks(text: str, chunk_size: int = 100) -> list:
     return chunks
 
 
-# ─────────────────────────────────────────
-# Setup - run once per resume
-# Also runs when new resume is uploaded
-# ─────────────────────────────────────────
 def setup_resumes():
     print("Scanning resumes folder...")
     resumes = get_all_resumes()
@@ -76,13 +59,11 @@ def setup_resumes():
     for resume_name, resume_path in resumes.items():
         resume_store_path = os.path.join(VECTOR_STORE_PATH, resume_name)
 
-        # Skip if already processed
         if os.path.exists(os.path.join(resume_store_path, "index.faiss")):
             print(f"⏭️  {resume_name} already processed, skipping")
             continue
 
         print(f"Processing {resume_name}...")
-
         text = extract_text_from_pdf(resume_path)
         chunks = split_into_chunks(text)
 
@@ -104,10 +85,6 @@ def setup_resumes():
     print("\n✅ All resumes processed!")
 
 
-# ─────────────────────────────────────────
-# Process single new resume
-# Called when user uploads from frontend
-# ─────────────────────────────────────────
 def process_new_resume(resume_path: str, resume_name: str):
     print(f"Processing new resume: {resume_name}")
     os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
@@ -132,73 +109,86 @@ def process_new_resume(resume_path: str, resume_name: str):
     print(f"✅ {resume_name} ready!")
 
 
-# ─────────────────────────────────────────
-# Match all resumes against JD
-# ─────────────────────────────────────────
 def match_resumes(jd_text: str) -> list:
     from groq import Groq
-    import os
     groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    
-    results = []
+
     resumes = get_all_resumes()
+    if not resumes:
+        return []
+
+    # Build all resume summaries in one shot
+    resume_summaries = ""
+    resume_texts = {}
 
     for resume_name, resume_path in resumes.items():
-        # Get full resume text
         if not os.path.exists(resume_path):
             continue
-            
-        full_text = extract_text_from_pdf(resume_path)
+        text = extract_text_from_pdf(resume_path)
+        resume_texts[resume_name] = resume_path
+        # Only send first 1500 chars per resume to save tokens
+        resume_summaries += f"\n\nRESUME_NAME: {resume_name}\n{text[:1500]}\n---"
 
-        # Ask Groq to score this resume against JD
-        prompt = f"""
-        You are a recruiter scoring a resume against a job description.
-        
-        Give a match score from 0 to 100 based on:
-        - Skills match (40%)
-        - Experience relevance (30%)
-        - Project relevance (30%)
-        
-        Job Description:
-        {jd_text}
-        
-        Resume:
-        {full_text[:5000]}
-        
-        Return ONLY a JSON object like this, nothing else:
-        {{"score": 75, "reason": "one line reason"}}
-        """
+    # One single API call for all resumes
+    prompt = f"""
+    You are a recruiter. Score each resume against the job description.
 
-        try:
-            response = groq_client.chat.completions.create(
-                model="openai/gpt-oss-20b",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            import json, re
-            text = response.choices[0].message.content.strip()
-            text = re.sub(r"```json|```", "", text).strip()
-            data = json.loads(text)
-            score = float(data.get("score", 0))
-            reason = data.get("reason", "")
-            
-        except:
-            score = 0.0
-            reason = "Could not score"
+    Score from 0-100 based on:
+    - Skills match (35%)
+    - How specifically resume targets this role (35%)
+    - Project and experience relevance (30%)
 
-        results.append({
-            "resume": resume_name,
-            "score": score,
-            "reason": reason,
-            "path": resume_path
-        })
+    Job Description:
+    {jd_text}
 
-    results.sort(key=lambda x: x["score"], reverse=True)
-    return results
-# ─────────────────────────────────────────
-# Get relevant chunks from best resume
-# ─────────────────────────────────────────
-def get_context(resume_name: str, jd_text: str, top_k: int = 5) -> str:
+    Resumes to score:
+    {resume_summaries}
+
+    Return ONLY a JSON array, nothing else:
+    [
+        {{"resume": "resume_name", "score": 75, "reason": "one line reason"}},
+        {{"resume": "resume_name2", "score": 60, "reason": "one line reason"}}
+    ]
+    """
+
+    try:
+        response = groq_client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        cleaned = re.sub(r"```json|```", "", raw).strip()
+        json_match = re.search(r'\[.*?\]', cleaned, re.DOTALL)
+        if json_match:
+            cleaned = json_match.group()
+
+        data = json.loads(cleaned)
+
+        results = []
+        for item in data:
+            resume_name = item.get("resume", "")
+            results.append({
+                "resume": resume_name,
+                "score": float(item.get("score", 50)),
+                "reason": item.get("reason", ""),
+                "path": resume_texts.get(resume_name, "")
+            })
+
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results
+
+    except Exception as e:
+        print(f"Scoring error: {e}")
+        # Fallback - return all resumes with 50% score
+        return [
+            {"resume": name, "score": 50.0, "reason": "Could not score", "path": path}
+            for name, path in resume_texts.items()
+        ]
+
+
+def get_context(resume_name: str, jd_text: str, top_k: int = 8) -> str:
     resume_store_path = os.path.join(VECTOR_STORE_PATH, resume_name)
 
     index = faiss.read_index(os.path.join(resume_store_path, "index.faiss"))
@@ -209,46 +199,38 @@ def get_context(resume_name: str, jd_text: str, top_k: int = 5) -> str:
     jd_embedding = embedding_model.encode([jd_text])
     jd_embedding = np.array(jd_embedding).astype('float32')
 
-    _, indices = index.search(jd_embedding, k=top_k)
-
+    _, indices = index.search(jd_embedding, k=min(top_k, len(chunks)))
     relevant_chunks = [chunks[i] for i in indices[0] if i < len(chunks)]
+
+    if len(chunks) <= 10:
+        return "\n\n".join(chunks)
+
     return "\n\n".join(relevant_chunks)
 
+# -----------------------Testing Dummy Details-----------------------
+# if __name__ == "__main__":
+#     print("=" * 40)
+#     print("STEP 1 - Setting up resumes")
+#     print("=" * 40)
+#     setup_resumes()
 
-# ─────────────────────────────────────────
-# TEST
-# ─────────────────────────────────────────
-if __name__ == "__main__":
+#     print()
+#     print("=" * 40)
+#     print("STEP 2 - Matching resumes to a JD")
+#     print("=" * 40)
 
-    print("=" * 40)
-    print("STEP 1 - Setting up resumes")
-    print("=" * 40)
-    setup_resumes()
+#     test_jd = """
+#     We are looking for a Full Stack Developer.
+#     Skills required: React, Node.js, MongoDB, REST APIs.
+#     Experience: 2+ years.
+#     Send resume to hr@company.com
+#     """
 
-    print()
-    print("=" * 40)
-    print("STEP 2 - Matching resumes to a JD")
-    print("=" * 40)
+#     matches = match_resumes(test_jd)
 
-    test_jd = """
-    We are looking for a Full Stack Developer.
-    Skills required: React, Node.js, MongoDB, REST APIs.
-    Experience: 2+ years.
-    Send resume to hr@company.com
-    """
-
-    matches = match_resumes(test_jd)
-
-    if matches:
-        print("\nResume Match Results:")
-        for i, match in enumerate(matches):
-            print(f"{i+1}. {match['resume']} — {match['score']}% match")
-
-        print()
-        print("=" * 40)
-        print(f"Best match: {matches[0]['resume']}")
-        print("=" * 40)
-        context = get_context(matches[0]['resume'], test_jd)
-        print(context[:500])
-    else:
-        print("No resumes found! Add PDFs to resumes/ folder first")
+#     if matches:
+#         print("\nResume Match Results:")
+#         for i, match in enumerate(matches):
+#             print(f"{i+1}. {match['resume']} — {match['score']}% match — {match['reason']}")
+#     else:
+#         print("No resumes found!")

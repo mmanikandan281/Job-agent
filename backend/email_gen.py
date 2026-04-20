@@ -146,40 +146,40 @@ BODY:
 # ─────────────────────────────────────────
 # TEST
 # ─────────────────────────────────────────
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    # Simulate data coming from jd_parser + rag
-    test_company = "Google"
-    test_role = "Full Stack Developer"
+#     # Simulate data coming from jd_parser + rag
+#     test_company = "Google"
+#     test_role = "Full Stack Developer"
 
-    test_jd = """
-    We are hiring a Full Stack Developer.
-    Requirements:
-    - 1-2 years experience in React and Node.js
-    - MongoDB or PostgreSQL
-    - REST API development
-    - Good problem solving skills
-    Send resume to careers@google.com
-    """
+#     test_jd = """
+#     We are hiring a Full Stack Developer.
+#     Requirements:
+#     - 1-2 years experience in React and Node.js
+#     - MongoDB or PostgreSQL
+#     - REST API development
+#     - Good problem solving skills
+#     Send resume to careers@google.com
+#     """
 
-    test_resume_context = """
-    Completed internship at Assimilate Technologies as Software Developer Intern.
-    Worked on backend APIs using Node.js and database integration.
-    Built projects using React, Tailwind CSS, MongoDB.
-    Strong foundation in full stack development.
-    Final year MCA student at Lead College of Management, Palakkad.
-    """
+#     test_resume_context = """
+#     Completed internship at Assimilate Technologies as Software Developer Intern.
+#     Worked on backend APIs using Node.js and database integration.
+#     Built projects using React, Tailwind CSS, MongoDB.
+#     Strong foundation in full stack development.
+#     Final year MCA student at Lead College of Management, Palakkad.
+#     """
 
-    print("Generating email...")
-    result = generate_email(
-        jd_text=test_jd,
-        company=test_company,
-        role=test_role,
-        resume_context=test_resume_context
-    )
+#     print("Generating email...")
+#     result = generate_email(
+#         jd_text=test_jd,
+#         company=test_company,
+#         role=test_role,
+#         resume_context=test_resume_context
+#     )
 
-    print("\n" + "=" * 50)
-    print("SUBJECT:", result["subject"])
-    print("=" * 50)
-    print(result["body"])
-    print("=" * 50)
+#     print("\n" + "=" * 50)
+#     print("SUBJECT:", result["subject"])
+#     print("=" * 50)
+#     print(result["body"])
+#     print("=" * 50)

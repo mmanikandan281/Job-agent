@@ -139,38 +139,38 @@ def send_email(
 # ─────────────────────────────────────────
 # TEST
 # ─────────────────────────────────────────
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    print("=" * 40)
-    print("Testing Gmail Send")
-    print("=" * 40)
+#     print("=" * 40)
+#     print("Testing Gmail Send")
+#     print("=" * 40)
 
-    # Test email - sending to yourself first to verify
-    test_to = os.getenv("GMAIL_ADDRESS")  # sends to yourself
-    test_subject = "Test - Job Agent Email"
-    test_body = """Dear Hiring Team,
+#     # Test email - sending to yourself first to verify
+#     test_to = os.getenv("GMAIL_ADDRESS")  # sends to yourself
+#     test_subject = "Test - Job Agent Email"
+#     test_body = """Dear Hiring Team,
 
-This is a test email from my Job Agent app.
+# This is a test email from my Job Agent app.
 
-Kind regards,
-Manikandan M"""
+# Kind regards,
+# Manikandan M"""
 
-    # Use any resume from your resumes folder
-    test_resume = "resumes/Res_Fullstack.pdf"
+#     # Use any resume from your resumes folder
+#     test_resume = "resumes/Res_Fullstack.pdf"
 
-    print(f"Sending test email to: {test_to}")
-    print("A browser will open first time for Google permission...")
-    print()
+#     print(f"Sending test email to: {test_to}")
+#     print("A browser will open first time for Google permission...")
+#     print()
 
-    result = send_email(
-        to=test_to,
-        subject=test_subject,
-        body=test_body,
-        resume_path=test_resume
-    )
+#     result = send_email(
+#         to=test_to,
+#         subject=test_subject,
+#         body=test_body,
+#         resume_path=test_resume
+#     )
 
-    print()
-    if result["success"]:
-        print("✅ Check your Gmail inbox!")
-    else:
-        print(f"❌ Error: {result['error']}")
+#     print()
+#     if result["success"]:
+#         print("✅ Check your Gmail inbox!")
+#     else:
+#         print(f"❌ Error: {result['error']}")

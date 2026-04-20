@@ -65,43 +65,44 @@ def parse_jd_from_pdf(pdf_path: str):
 
     return parse_jd(extracted_text)
 
+# -----------------------Testing Dummy Details-----------------------
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    print("=" * 40)
-    print("TEST 1 - Plain Text JD")
-    print("=" * 40)
+#     print("=" * 40)
+#     print("TEST 1 - Plain Text JD")
+#     print("=" * 40)
 
-    test_jd = """
-    We are looking for a Full Stack Developer at TechCorp Solutions.
+#     test_jd = """
+#     We are looking for a Full Stack Developer at TechCorp Solutions.
     
-    Requirements:
-    - 2+ years experience in React and Node.js
-    - Knowledge of MongoDB
-    - Good communication skills
+#     Requirements:
+#     - 2+ years experience in React and Node.js
+#     - Knowledge of MongoDB
+#     - Good communication skills
     
-    About us:
-    TechCorp Solutions is a leading software company based in Bangalore.
+#     About us:
+#     TechCorp Solutions is a leading software company based in Bangalore.
     
-    To apply send your resume to careers@techcorp.com
-    """
+#     To apply send your resume to careers@techcorp.com
+#     """
 
-    result = parse_jd(test_jd)
-    print(f"HR Email  : {result['hr_email']}")
-    print(f"Company   : {result['company']}")
-    print(f"Role      : {result['role']}")
+#     result = parse_jd(test_jd)
+#     print(f"HR Email  : {result['hr_email']}")
+#     print(f"Company   : {result['company']}")
+#     print(f"Role      : {result['role']}")
 
-    print()
-    print("=" * 40)
-    print("TEST 2 - PDF JD")
-    print("=" * 40)
+#     print()
+#     print("=" * 40)
+#     print("TEST 2 - PDF JD")
+#     print("=" * 40)
 
-    pdf_path = "resumes/sample_jd.pdf"
+#     pdf_path = "resumes/sample_jd.pdf"
 
-    if os.path.exists(pdf_path):
-        result2 = parse_jd_from_pdf(pdf_path)
-        print(f"HR Email  : {result2['hr_email']}")
-        print(f"Company   : {result2['company']}")
-        print(f"Role      : {result2['role']}")
-    else:
-        print("No sample PDF found, skipping PDF test")
+#     if os.path.exists(pdf_path):
+#         result2 = parse_jd_from_pdf(pdf_path)
+#         print(f"HR Email  : {result2['hr_email']}")
+#         print(f"Company   : {result2['company']}")
+#         print(f"Role      : {result2['role']}")
+#     else:
+#         print("No sample PDF found, skipping PDF test")
