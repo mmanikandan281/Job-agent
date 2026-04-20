@@ -14,6 +14,17 @@ A personal AI tool that reads job descriptions, matches your best resume, writes
 - 📁 **Resume Manager** — Upload, view and delete resumes from the UI
 
 ---
+## UI
+
+<img width="1251" height="895" alt="image" src="https://github.com/user-attachments/assets/ddc147fa-8686-4e9f-ac55-35a5b8a8de3e" />
+
+<img width="1027" height="917" alt="image" src="https://github.com/user-attachments/assets/0aad1234-d7a6-49d4-84bd-d1943029a2c7" />
+
+<img width="964" height="870" alt="image" src="https://github.com/user-attachments/assets/8d802758-1916-4293-ae18-7adb4356329e" />
+
+<img width="1046" height="802" alt="image" src="https://github.com/user-attachments/assets/9325fbe0-b85c-409e-b489-0bf4b76aafb8" />
+
+<img width="1390" height="684" alt="image" src="https://github.com/user-attachments/assets/83b18dac-8916-4838-b959-0c28268ffe30" />
 
 ## 🔧 Tech Stack
 
