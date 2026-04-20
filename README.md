@@ -296,6 +296,6 @@ node_modules/
 ## 👨‍💻 Built By
 
 **Manikandan M**
-MCA Student | Software Developer
+| MCA Student | Software Developer
 
 🔗 [GitHub](https://github.com/mmanikandan281) | [LinkedIn](https://linkedin.com/in/mmanikandan281) | [Portfolio](https://portfolio-manikandan-m.vercel.app/)
